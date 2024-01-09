@@ -11,3 +11,11 @@
 <!-- Aqua badge, see test/runtests.jl -->
 <!-- [![Aqua QA](https://raw.githubusercontent.com/JuliaTesting/Aqua.jl/master/badge.svg)](https://github.com/JuliaTesting/Aqua.jl) -->
 
+Julia package for flat views of nested collections.  **EXPERIMENTAL**.
+
+## Related packages
+
+Similar packages include [ValueShapes.jl](https://github.com/oschulz/ValueShapes.jl), [https://github.com/JuliaNonconvex/DifferentiableFlatten.jl](DifferentiableFlatten.jl),
+[ComponentArrays.jl](https://github.com/jonniedie/ComponentArrays.jl) [if I missed a package, please open an issue/PR adding to this list].
+
+`FlatViews` is different from these because it only flattens when asked to (with `collect`). **FIXME** *expand on this*.
