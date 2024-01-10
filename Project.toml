@@ -1,0 +1,11 @@
+name = "FlatViews"
+uuid = "7b36b3b9-274d-4a68-87d4-9634844f6493"
+authors = ["Tamás K. Papp <tkpapp@gmail.com>"]
+version = "0.1.0"
+
+[deps]
+DocStringExtensions = "ffbed154-4ef7-542d-bbb7-c09d3a79fcae"
+
+[compat]
+julia = "1.8"
+DocStringExtensions = "0.9"
