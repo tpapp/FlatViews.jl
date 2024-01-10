@@ -1,12 +1,14 @@
 using FlatViews
 using Test
+using StaticArrays
 
 @testset "inferred roundtrip" begin
-    x = (a = 1, b = [2.0, 3.0], d = (4, 5f0))
+    x = (a = 1, b = [2.0, 3.0], d = (4, 5f0, SMatrix{2,2}(6.0, 7.0, 8.0, 9.0)))
     v = @inferred flatten(x)
-    @test v == 1:5
+    @test v == 1:9
     y = @inferred reconstruct_like(x, v)
     @test x == y
+    @test y.d[3] isa SMatrix{2,2,Float64}
 end
 
 @testset "errors" begin

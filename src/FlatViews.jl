@@ -14,6 +14,7 @@ module FlatViews
 export flat_length, flat_eltype, flatten_into!, flatten, reconstruct_like
 
 using DocStringExtensions: SIGNATURES
+using StaticArrays: SArray
 
 # FIXME Julia 1.11
 # public flatten_into_at!, reconstruct_like_at
@@ -44,7 +45,7 @@ end
 ####
 
 "Types that flatten into a single-element vector. Internal."
-const ATOM = Number
+const ATOM = Real
 
 """
 $(SIGNATURES)
@@ -98,6 +99,14 @@ $(SIGNATURES)
 
 Reconstruct and object like `c` from `v`, starting at offset `i`.
 
+Return
+
+1. the reconstructed object and
+
+2. the continuation offset
+
+as a tuple.
+
 Does not check if all the elements were used up from `v`.
 """
 function reconstruct_like_at(c::T, v::AbstractVector, i) where {T<:ATOM}
@@ -127,25 +136,58 @@ flat_length(a::AbstractArray) = sum(flat_length, a)
 flat_eltype(::Type{<:AbstractArray{T}}) where T = flat_eltype(T)
 
 function flatten_into_at!(v, c::AbstractArray{T}, i) where T
-    if T <: Number
+    if T <: ATOM
         l = length(c)
         copyto!(v, i + 1, c, firstindex(c), l)
         i + l
     else
         for e in vec(c)
-            i = flatten_into_at!(v, c, i)
+            i = flatten_into_at!(v, e, i)
         end
         i
     end
 end
 
+"""
+Iterate over `c`, reconstruncting from with with an offset `i` that is incremented with
+every step.
+
+Stateful, caller may retrieve `i` at the end.
+
+Internal.
+"""
+mutable struct ReconstructLikeIterator{C,V}
+    c::C
+    v::V
+    i::Int
+end
+
+Base.length(itr::ReconstructLikeIterator) = length(itr.c)
+
+# let collect pick the type
+Base.IteratorEltype(::Type{<:ReconstructLikeIterator}) = Base.EltypeUnknown()
+
+function Base.iterate(itr::ReconstructLikeIterator, c_state = nothing)
+    (; c, v) = itr
+    c_step = c_state ≡ nothing ? iterate(c) : iterate(c, c_state)
+    c_step ≡ nothing && return nothing
+    r, i = reconstruct_like_at(c_step[1], v, itr.i)
+    itr.i = i
+    r, c_step[2]
+end
+
 function reconstruct_like_at(c::AbstractArray, v, i)
-    j::Int = i
-    function _f(c)
-        r, j = reconstruct_like_at(c, v, j)
-        r
+    itr = ReconstructLikeIterator(c, v, i)
+    reshape(collect(itr), size(c)), itr.i
+end
+
+function reconstruct_like_at(c::SArray{S,T,N,L}, v::AbstractVector, i) where {S,N,T,L}
+    if T <: ATOM
+        SArray{S}(@view v[(i+1):(i+L)]), i + L
+    else
+        itr = ReconstructLikeIterator(c, v, i)
+        SArray{S}(itr), itr.i
     end
-    [_f(c) for c in c], j
 end
 
 ####
